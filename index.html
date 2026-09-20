@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E1A20">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Camino a Berlín</title>
+<style>
+  :root{
+    --bg:#0E1A20; --panel:#16262E; --panel2:#1C3039; --line:#243B45;
+    --text:#E4ECEE; --dim:#8CA6AF; --faint:#5C7680;
+    --done:#63B79C; --today:#F0A63C; --race:#F2695C;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--text); min-height:100vh;
+    font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    padding-bottom:calc(40px + env(safe-area-inset-bottom));
+    -webkit-tap-highlight-color:transparent;
+  }
+  .num{font-family:ui-monospace,'SF Mono','Roboto Mono',Menlo,monospace;font-variant-numeric:tabular-nums}
+
+  .races{display:flex;border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+  .race{flex:1;padding:12px 10px;border-right:1px solid var(--line)}
+  .race:last-child{border-right:none;background:#1A2B33}
+  .race .nm{font-size:10.5px;color:var(--dim);margin-bottom:3px}
+  .race:last-child .nm{color:var(--race)}
+  .race .d{font-size:18px;font-weight:600;color:var(--dim);line-height:1}
+  .race:last-child .d{font-size:22px;color:var(--text)}
+  .race .d span{font-size:10px;font-weight:400;color:var(--faint);margin-left:3px}
+  .race .g{font-size:10px;color:var(--faint);margin-top:3px}
+
+  .hero{padding:22px 18px 20px;border-bottom:1px solid var(--line)}
+  .hero .when{font-size:11px;color:var(--today);margin-bottom:10px}
+  .hero .main{display:flex;align-items:flex-start;gap:16px}
+  .hero .km{font-size:46px;font-weight:300;line-height:.9}
+  .hero .km span{font-size:15px;color:var(--dim);margin-left:2px}
+  .hero .txt{font-size:15px;line-height:1.35}
+  .hero .typ{font-size:11px;margin-top:5px}
+
+  .strip{display:flex;gap:4px;overflow-x:auto;padding:10px 14px;border-bottom:1px solid var(--line);scrollbar-width:none}
+  .strip::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;width:30px;height:30px;border-radius:15px;border:none;background:transparent;
+        color:var(--faint);font-size:12px;font-family:ui-monospace,monospace;cursor:pointer}
+  .chip.now{color:var(--today);font-weight:600}
+  .chip.sel{background:var(--text);color:var(--bg);font-weight:600}
+
+  .whead{padding:16px 18px 4px;display:flex;justify-content:space-between;align-items:baseline}
+  .whead h2{font-size:17px;font-weight:600;margin:0}
+  .whead .blk{font-size:12px;color:var(--dim);margin-top:2px}
+  .whead .tot{font-size:13px;color:var(--dim);text-align:right}
+
+  .list{padding:10px 12px}
+  .rest{padding:11px 8px;font-size:12.5px;color:var(--faint);display:flex;gap:10px}
+  .rest b{width:62px;font-weight:400}
+
+  .card{border:1px solid var(--line);background:var(--panel);border-radius:6px;margin-bottom:7px;overflow:hidden}
+  .card.done{background:#14282A}
+  .card.today{border-color:var(--today)}
+  .row{display:flex;align-items:center;gap:11px;padding:11px 12px;cursor:pointer}
+  .tick{width:24px;height:24px;flex-shrink:0;border-radius:12px;border:1.5px solid var(--line);
+        background:transparent;color:var(--bg);font-size:13px;font-weight:700;line-height:1;padding:0;cursor:pointer}
+  .card.done .tick{border-color:var(--done);background:var(--done)}
+  .row .mid{flex:1;min-width:0}
+  .row .day{font-size:10.5px;color:var(--faint);margin-bottom:3px}
+  .card.today .row .day{color:var(--today)}
+  .row .sess{font-size:13.5px;line-height:1.3}
+  .card.done .row .sess{color:var(--dim)}
+  .row .right{text-align:right;flex-shrink:0;display:flex;align-items:center;gap:9px}
+  .row .rkm{font-size:15px;color:var(--dim)}
+  .card.done .row .rkm{color:var(--done)}
+  .row .bar{width:3px;height:22px;border-radius:2px;opacity:.85}
+  .caret{color:var(--faint);font-size:10px;transition:transform .15s}
+  .card.open .caret{transform:rotate(180deg)}
+
+  .panel{border-top:1px solid var(--line)}
+  .card.fz{margin:-3px 0 7px 22px;background:#131F27;border-style:dashed}
+  .card.fz.done{background:#14282A;border-style:solid}
+  .card.fz .row{padding:9px 12px}
+  .card.fz .sess{font-size:12.5px}
+  .card.fz .tick{width:21px;height:21px;font-size:11px}
+  .fsub{font-size:10.5px;color:var(--faint);margin-top:3px}
+  .fwarn{margin-top:10px;font-size:11px;color:var(--today);line-height:1.4}
+
+  /* descripción */
+  .desc{padding:13px 13px 14px;background:#12212A;border-bottom:1px solid var(--line)}
+  .desc .seg{display:flex;gap:10px;margin-bottom:9px}
+  .desc .seg:last-of-type{margin-bottom:0}
+  .desc .tag{flex:0 0 76px;font-size:10px;color:var(--faint);padding-top:2px;text-transform:uppercase;letter-spacing:.4px}
+  .desc .val{flex:1;font-size:12.5px;line-height:1.45;color:var(--dim)}
+  .desc .val b{color:var(--text);font-weight:600}
+  .desc .focus{margin-top:12px;padding-top:11px;border-top:1px solid var(--line);
+               font-size:12.5px;line-height:1.5;color:var(--dim);font-style:italic}
+
+  /* registro */
+  .rec{padding:13px}
+  .rec h4{margin:0 0 10px;font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.4px;font-weight:500}
+  .fields{display:flex;gap:8px}
+  .lbl{display:block;font-size:10px;color:var(--faint);margin-bottom:4px}
+  .inp{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);
+       border-radius:5px;padding:8px 9px;font-size:13.5px;font-family:inherit}
+  .inp:focus{outline:2px solid var(--done);outline-offset:1px;border-color:transparent}
+  textarea.inp{resize:vertical;line-height:1.4}
+  select.inp{padding:8px 4px}
+
+  .reps{margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
+  .rep{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+  .rep .n{flex:0 0 58px;font-size:11px;color:var(--faint)}
+  .rep input{flex:0 0 78px;text-align:center;padding:7px 4px}
+  .rep .p{flex:1;font-size:12px;color:var(--done);text-align:right}
+  .rep .p.slow{color:var(--today)}
+  .repavg{display:flex;justify-content:space-between;font-size:11.5px;color:var(--dim);
+          margin-top:10px;padding-top:9px;border-top:1px solid var(--line)}
+
+  .prog{margin:18px 18px 0;padding-top:16px;border-top:1px solid var(--line)}
+  .prow{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin-bottom:8px}
+  .bar-bg{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+  .bar-fill{height:100%;background:var(--done);width:0}
+
+  .btn{padding:11px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit;
+       background:transparent;color:var(--dim);border:1px solid var(--line);width:100%}
+  .btn:active{opacity:.7}
+  .btn.solid{background:var(--panel2);color:var(--text);margin-top:16px}
+
+  .tbl{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px;color:var(--dim)}
+  .tbl th{font-weight:500;font-size:10.5px;color:var(--faint);padding:6px 4px;text-align:right;border-bottom:1px solid var(--line)}
+  .tbl th:first-child,.tbl td:first-child{text-align:left;color:var(--text)}
+  .tbl td{padding:7px 4px;text-align:right;border-bottom:1px solid var(--panel)}
+  .tbl td:last-child{color:var(--text)}
+
+  .tools{margin:20px 18px 0;display:flex;gap:8px}
+  .status{text-align:center;font-size:11px;color:var(--faint);margin-top:16px;height:14px}
+  @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="races" id="races"></div>
+<div id="hero"></div>
+<div class="strip" id="strip"></div>
+<div class="whead" id="whead"></div>
+<div class="list" id="list"></div>
+<div class="prog">
+  <div class="prow"><span>Temporada</span><span class="num" id="pSess"></span></div>
+  <div class="bar-bg"><div class="bar-fill" id="pBar"></div></div>
+  <div class="prow" style="margin:10px 0 0"><span>Kilómetros acumulados</span><span class="num" id="pKm"></span></div>
+  <div class="prow" style="margin:6px 0 0"><span>Sesiones de fuerza</span><span class="num" id="pFz"></span></div>
+</div>
+<div style="margin:20px 18px 0"><button class="btn" id="btnPaces">Ver tabla de ritmos</button><div id="paces"></div></div>
+<div class="tools">
+  <button class="btn" id="btnExport">Exportar copia</button>
+  <button class="btn" id="btnImport">Importar copia</button>
+</div>
+<input type="file" id="fileIn" accept="application/json" style="display:none">
+<div class="status" id="status"></div>
+
+<script>
+/* ══════════ PLAN ══════════ */
+const BASE = new Date(2026,8,14);
+const DAYS=[{k:'mar',l:'martes',o:1},{k:'mie',l:'miércoles',o:2},{k:'jue',l:'jueves',o:3},{k:'sab',l:'sábado',o:5},{k:'dom',l:'domingo',o:6}];
+const TC={q:'#F0A63C',e:'#5C7680',m:'#7FA8C4',l:'#9B8BD0',r:'#F2695C'};
+const TN={q:'Calidad',e:'Fácil',m:'Medio',l:'Larga',r:'Carrera'};
+
+/* ritmos por fase: 0 = sep-oct (sem 1-10) · 1 = enero (sem 11-19) · 2 = abril (sem 20-29) */
+const PACE={
+  facil:['5:05–5:20','5:00–5:15','4:55–5:10'],
+  medio:['4:35–4:45','4:30–4:40','4:25–4:35'],
+  rm:   ['4:00–4:03','3:55–3:57','3:53'],
+  umbral:['3:55–4:00','3:48–3:52','3:44–3:47'],
+  r10k: ['3:50','3:44–3:47','3:42–3:45'],
+  vo2:  ['3:40–3:45','3:36–3:40','3:34–3:38']
+};
+const PACE_NAME={facil:'ritmo fácil',medio:'ritmo medio',rm:'ritmo de media',umbral:'umbral',r10k:'ritmo de 10K',vo2:'VO2max',fuerte:'fuerte'};
+/* segundos/km del centro de cada rango, para juzgar si una serie va lenta */
+const PACE_MID={
+  facil:[312,307,302], medio:[280,275,270], rm:[241,236,233],
+  umbral:[237,230,226], r10k:[230,225,223], vo2:[222,218,216]
+};
+const phase=w=>w<10?0:(w<19?1:2);
+
+const PLAN=[
+ ['Reconstrucción',{mar:['8 km fácil + 6 rectas',8,'e'],mie:['8 km fácil',8,'e'],jue:null,sab:['8 km + 8x30" en cuesta',8,'q'],dom:['14 km fácil',14,'l']}],
+ ['Reconstrucción',{mar:['9 km + 8x30" en cuesta',9,'q'],mie:['8 km fácil',8,'e'],jue:['8 km fácil',8,'e'],sab:['6 km suave',6,'e'],dom:['15 km fácil',15,'l']}],
+ ['Reconstrucción',{mar:["Fartlek 8x1'/1' por sensaciones",10,'q'],mie:['9 km fácil',9,'e'],jue:['8 km fácil',8,'e'],sab:['7 km suave',7,'e'],dom:['16 km fácil',16,'l']}],
+ ['Reconstrucción · descarga',{mar:['8 km fácil + 6 rectas',8,'e'],mie:['8 km fácil',8,'e'],jue:['7 km fácil',7,'e'],sab:null,dom:['14 km fácil',14,'l']}],
+
+ ['Base y umbral',{mar:["4x2000 umbral · rec 2'",11,'q'],mie:['10 km fácil',10,'e'],jue:['9 km medio',9,'m'],sab:['8 km fácil',8,'e'],dom:['17 km fácil',17,'l']}],
+ ['Base y umbral',{mar:["3x3000 umbral · rec 3'",14,'q'],mie:['10 km fácil',10,'e'],jue:['10 km medio',10,'m'],sab:['8 km fácil',8,'e'],dom:['18 km · últimos 4 a ritmo de media',18,'l']}],
+ ['Base y umbral',{mar:['5x2000 umbral · rec 90"',16,'q'],mie:['11 km fácil',11,'e'],jue:['10 km medio',10,'m'],sab:['9 km fácil',9,'e'],dom:['19 km · últimos 5 a ritmo de media',19,'l']}],
+ ['Base y umbral · descarga',{mar:["8 km + 6x1' fuerte",8,'q'],mie:['9 km fácil',9,'e'],jue:['8 km fácil',8,'e'],sab:['7 km suave',7,'e'],dom:['16 km fácil',16,'l']}],
+ ['Base y umbral',{mar:["Tempo continuo 25'",13,'q'],mie:['11 km fácil',11,'e'],jue:['11 km medio',11,'m'],sab:['10 km fácil',10,'e'],dom:['20 km · últimos 6 a ritmo de media',20,'l']}],
+ ['Base y umbral',{mar:["2x5000 umbral · rec 4'",16,'q'],mie:['12 km fácil',12,'e'],jue:['12 km medio',12,'m'],sab:['10K de control (Benidorm)',16,'r'],dom:['12 km suave',12,'e']}],
+ ['Base y umbral',{mar:['6x1500 umbral · rec 90"',16,'q'],mie:['13 km fácil',13,'e'],jue:['12 km medio',12,'m'],sab:['11 km fácil',11,'e'],dom:['20 km · 2x5 km a ritmo de media',20,'l']}],
+ ['Base y umbral · descarga',{mar:["Tempo continuo 30'",13,'q'],mie:['10 km fácil',10,'e'],jue:['9 km fácil',9,'e'],sab:['7 km suave',7,'e'],dom:['16 km fácil',16,'l']}],
+
+ ['Afilado de 10K',{mar:['5x1000 VO2 · rec 2\'30"',14,'q'],mie:['12 km fácil',12,'e'],jue:['12 km medio',12,'m'],sab:['12 km + 6 rectas',12,'e'],dom:['20 km · últimos 6 a ritmo de media',20,'l']}],
+ ['Afilado de 10K',{mar:['4x1500 a ritmo de 10K · rec 2\'30"',14,'q'],mie:['13 km fácil',13,'e'],jue:['12 km medio',12,'m'],sab:["8 km + tempo 15'",12,'q'],dom:['21 km · 2x6 km a ritmo de media',21,'l']}],
+ ['Afilado de 10K',{mar:["6x1000 VO2 · rec 2'",14,'q'],mie:['11 km fácil',11,'e'],jue:['10 km medio',10,'m'],sab:['13 km fácil',13,'e'],dom:['20 km · últimos 8 a ritmo de media',20,'l']}],
+ ['Afilado de 10K',{mar:["3x2000 a ritmo de 10K · rec 3'",13,'q'],mie:['10 km fácil',10,'e'],jue:['9 km fácil',9,'e'],sab:['San Silvestre 5K',12,'r'],dom:['16 km fácil',16,'l']}],
+
+ ['Enero · taper Valencia',{mar:["6x800 a ritmo de 10K · rec 2'",11,'q'],mie:['9 km fácil',9,'e'],jue:['8 km fácil',8,'e'],sab:['6 km + 4 rectas',6,'e'],dom:['10K VALENCIA',14,'r']}],
+ ['Enero · recuperación',{mar:['8 km muy suave',8,'e'],mie:['10 km fácil',10,'e'],jue:["10 km + 6x1'",10,'q'],sab:['9 km fácil',9,'e'],dom:['15 km fácil',15,'l']}],
+ ['Enero · mini-taper',{mar:["3x2000 a ritmo de media · rec 2'",10,'q'],mie:['7 km fácil',7,'e'],jue:['6 km fácil',6,'e'],sab:['5 km + 4 rectas',5,'e'],dom:['MEDIA DE SANTA POLA',24,'r']}],
+
+ ['Transición',{mar:['7 km suave',7,'e'],mie:['8 km fácil',8,'e'],jue:null,sab:['7 km fácil',7,'e'],dom:['13 km fácil',13,'l']}],
+ ['Base 2',{mar:["8 km + 8x1'",8,'q'],mie:['10 km fácil',10,'e'],jue:['9 km fácil',9,'e'],sab:['8 km fácil',8,'e'],dom:['15 km fácil',15,'l']}],
+ ['Base 2',{mar:["4x2500 umbral · rec 2'",15,'q'],mie:['11 km fácil',11,'e'],jue:['10 km medio',10,'m'],sab:['9 km fácil',9,'e'],dom:['20 km · últimos 6 a ritmo de media',20,'l']}],
+ ['Base 2',{mar:["3x4000 umbral · rec 3'",17,'q'],mie:['12 km fácil',12,'e'],jue:['12 km medio',12,'m'],sab:['10 km fácil',10,'e'],dom:['22 km · 2x6 km a ritmo de media',22,'l']}],
+ ['Base 2',{mar:["Tempo continuo 35'",15,'q'],mie:['13 km fácil',13,'e'],jue:['12 km medio',12,'m'],sab:['11 km + 6 rectas',11,'e'],dom:['24 km · últimos 10 a ritmo de media',24,'l']}],
+ ['Base 2 · descarga',{mar:["5x1000 VO2 · rec 2'",11,'q'],mie:['11 km fácil',11,'e'],jue:['10 km fácil',10,'e'],sab:['8 km suave',8,'e'],dom:['18 km fácil',18,'l']}],
+ ['Específico Berlín',{mar:["2x6000 umbral · rec 4'",18,'q'],mie:['13 km fácil',13,'e'],jue:['13 km medio',13,'m'],sab:["11 km + tempo 15'",11,'q'],dom:['25 km · 2x7 km a ritmo de media',25,'l']}],
+ ['Específico Berlín',{mar:["3x5000 umbral · rec 3'",21,'q'],mie:['14 km fácil',14,'e'],jue:['13 km medio',13,'m'],sab:['11 km fácil',11,'e'],dom:['26 km · últimos 14 a 3:53 — la sesión clave',26,'l']}],
+
+ ['Taper Berlín',{mar:["4x2000 a ritmo de media · rec 2'",12,'q'],mie:['11 km fácil',11,'e'],jue:['10 km fácil',10,'e'],sab:['9 km + 6 rectas',9,'e'],dom:['18 km · últimos 6 a ritmo de media',18,'l']}],
+ ['Taper Berlín',{mar:["6x1000 a ritmo de media · rec 2'",10,'q'],mie:['8 km fácil',8,'e'],jue:['6 km + 4 rectas',6,'e'],sab:['4 km muy suave',4,'e'],dom:['MEDIA DE BERLÍN',24,'r']}]
+];
+
+/* ══════════ DESCRIPCIONES ══════════
+   wu calentamiento · sets bloques (d en metros) · cd vuelta a la calma · focus el porqué */
+const D={
+ '0-mar':{wu:'8 km a ritmo fácil',sets:[{n:6,d:100,label:'100 m progresivos',rec:'vuelta andando'}],
+   focus:'Las rectas no cansan: despiertan el gesto rápido sin meter carga. Sube progresivo hasta el 90% en los últimos 30 m y suelta.'},
+ '0-sab':{wu:'3,5 km suave + movilidad',sets:[{n:8,d:null,label:'30" en cuesta al 90%',rec:'bajada trotando'}],cd:'2,5 km muy suave',
+   focus:'La cuesta da fuerza sin impacto, que es justo lo que necesitas tras el parón. Busca un 5-7% de pendiente. Torso erguido, zancada corta, no te tires hacia delante.'},
+ '1-mar':{wu:'4 km suave + movilidad',sets:[{n:8,d:null,label:'30" en cuesta al 90%',rec:'bajada trotando'}],cd:'3 km muy suave',
+   focus:'Misma cuesta que la semana pasada. Si la última repetición sale igual que la primera, vas bien de control.'},
+ '2-mar':{wu:'4 km fácil',sets:[{n:8,d:null,label:"1' fuerte",rec:"1' trote"}],cd:'2,5 km suave',
+   focus:'Por sensaciones, sin mirar el reloj. "Fuerte" es un esfuerzo que podrías sostener unos 10 minutos, no un sprint.'},
+ '3-mar':{wu:'8 km a ritmo fácil',sets:[{n:6,d:100,label:'100 m progresivos',rec:'vuelta andando'}],
+   focus:'Semana de descarga. Si te sientes fuerte, está funcionando: no la conviertas en otra cosa.'},
+
+ '4-mar':{wu:'2 km suave + 4 rectas',sets:[{n:4,d:2000,pace:'umbral',rec:"2' trote"}],cd:'1 km suave',
+   focus:'Primera sesión de umbral del año. El umbral es el motor real de la media. Debe salir controlado: si la cuarta serie te cuesta agonía, ibas demasiado rápido.'},
+ '5-mar':{wu:'3 km suave + 4 rectas',sets:[{n:3,d:3000,pace:'umbral',rec:"3' trote"}],cd:'2 km suave',
+   focus:'Menos series pero más largas. El objetivo es acostumbrarte a sostener, no a repetir.'},
+ '5-dom':{wu:'14 km a ritmo fácil',sets:[{n:1,d:4000,pace:'rm',label:'últimos 4 km'}],
+   focus:'Primera tirada con ritmo al final. Entra en ritmo sin acelerón, de un kilómetro al siguiente.'},
+ '6-mar':{wu:'3,5 km suave + 4 rectas',sets:[{n:5,d:2000,pace:'umbral',rec:'90" trote'}],cd:'2,5 km suave',
+   focus:'Recuperación más corta que en la semana 5 con el mismo ritmo: sube la densidad, no la velocidad.'},
+ '6-dom':{wu:'14 km a ritmo fácil',sets:[{n:1,d:5000,pace:'rm',label:'últimos 5 km'}],
+   focus:'Un kilómetro más que la semana pasada. Aquí se construye la resistencia al ritmo que te faltó en enero.'},
+ '7-mar':{wu:'3 km fácil',sets:[{n:6,d:null,label:"1' fuerte",rec:"2' trote"}],cd:'2 km suave',
+   focus:'Descarga. Sesión corta solo para no oxidarte. Sal antes de tiempo si dudas.'},
+ '8-mar':{wu:'4 km suave + 4 rectas',sets:[{n:1,d:null,label:"25' continuos a umbral",pace:'umbral'}],cd:'2,5 km suave',
+   focus:'Primer tempo continuo. Sin recuperaciones que te salven: es mentalmente más duro que 5x2000 aunque sea el mismo ritmo. Ese es el punto.'},
+ '8-dom':{wu:'14 km a ritmo fácil',sets:[{n:1,d:6000,pace:'rm',label:'últimos 6 km'}],
+   focus:'Seis kilómetros finales. Justo la distancia donde explotaste en Santa Pola.'},
+ '9-mar':{wu:'3,5 km suave + 4 rectas',sets:[{n:2,d:5000,pace:'umbral',rec:"4' trote"}],cd:'2,5 km suave',
+   focus:'Dos bloques de 5 km es mucho volumen de umbral. Si el segundo se cae más de 5 s/km respecto al primero, el primero fue demasiado rápido.'},
+ '9-sab':{wu:'3 km + 4 rectas + 2 aceleraciones',sets:[{n:1,d:10000,pace:'r10k',label:'10K de control'}],cd:'2 km muy suave',
+   focus:'Test de verdad, a tope. Con esta marca recalibramos todos los ritmos del resto de la temporada. Sal controlado los 2 primeros km.'},
+ '10-mar':{wu:'4 km suave + 4 rectas',sets:[{n:6,d:1500,pace:'umbral',rec:'90" trote'}],cd:'3 km suave',
+   focus:'9 km de umbral en total. Aquí es donde el año pasado te quedaste corto: nunca pasaste de esta cifra.'},
+ '10-dom':{wu:'6 km fácil',sets:[{n:2,d:5000,pace:'rm',rec:"2' trote"}],cd:'4 km suave',
+   focus:'Dos bloques en vez de un final. Volver a entrar en ritmo tras la recuperación enseña al cuerpo a reengancharse cuando ya duele.'},
+ '11-mar':{wu:'3 km suave + 4 rectas',sets:[{n:1,d:null,label:"30' continuos a umbral",pace:'umbral'}],cd:'2 km suave',
+   focus:'Descarga en volumen, no en intensidad. Cinco minutos más que el tempo de la semana 9.'},
+
+ '12-mar':{wu:'5,5 km suave + 5 rectas',sets:[{n:5,d:1000,pace:'vo2',rec:"2'30\" trote"}],cd:'3,5 km suave',
+   focus:'Cambio de bloque: entra el trabajo de 10K. Esto duele distinto al umbral — pulso alto, respiración al límite. Es correcto que te cueste.'},
+ '12-dom':{wu:'14 km a ritmo fácil',sets:[{n:1,d:6000,pace:'rm',label:'últimos 6 km'}],
+   focus:'La tirada larga no se abandona aunque estemos afilando el 10K. Es el cimiento de abril.'},
+ '13-mar':{wu:'5 km suave + 5 rectas',sets:[{n:4,d:1500,pace:'r10k',rec:"2'30\" trote"}],cd:'3 km suave',
+   focus:'Ritmo específico de Valencia. Los 1500 son largos para este ritmo: si aguantas los cuatro, el 10K está encaminado.'},
+ '13-sab':{wu:'5 km suave + 4 rectas',sets:[{n:1,d:null,label:"15' continuos a umbral",pace:'umbral'}],cd:'3 km suave',
+   focus:'Tempo corto para mantener el umbral mientras el martes va a VO2. No lo corras a ritmo de 10K.'},
+ '13-dom':{wu:'5,5 km fácil',sets:[{n:2,d:6000,pace:'rm',rec:"3' trote"}],cd:'3,5 km muy suave',
+   focus:'12 km a ritmo de media dentro de una tirada de 21. Es la sesión más específica del bloque de invierno.'},
+ '14-mar':{wu:'5 km suave + 5 rectas',sets:[{n:6,d:1000,pace:'vo2',rec:"2' trote"}],cd:'3 km suave',
+   focus:'Una serie más y menos recuperación que en la semana 13. Es el pico de VO2 de la temporada.'},
+ '14-dom':{wu:'12 km a ritmo fácil',sets:[{n:1,d:8000,pace:'rm',label:'últimos 8 km'}],
+   focus:'Ocho kilómetros finales a ritmo. Ensaya aquí los geles que vayas a usar en carrera.'},
+ '15-mar':{wu:'4 km suave + 5 rectas',sets:[{n:3,d:2000,pace:'r10k',rec:"3' trote"}],cd:'3 km suave',
+   focus:'Última sesión larga a ritmo de 10K antes del taper. Debe salir sólida, no heroica.'},
+ '15-sab':{wu:'3 km + 4 rectas',sets:[{n:1,d:5000,pace:'vo2',label:'San Silvestre 5K'}],cd:'2 km suave',
+   focus:'Test de afilado, no objetivo. Si no la corres, sustituye por 8 km con 4x800 a ritmo de 10K.'},
+
+ '16-mar':{wu:'3,5 km suave + 5 rectas',sets:[{n:6,d:800,pace:'r10k',rec:"2' trote"}],cd:'2,5 km suave',
+   focus:'Sesión de activación, volumen bajo y ritmo exacto de carrera. Debes terminar con ganas de más.'},
+ '16-dom':{wu:'3 km + 4 rectas + 2 aceleraciones',sets:[{n:1,d:10000,pace:'r10k',label:'10K VALENCIA'}],cd:'1 km andando',
+   focus:'Sal a 3:47-3:48 los dos primeros kilómetros aunque te sobren piernas, y aprieta desde el 6. Es el circuito más rápido de España: deja que trabaje por ti.'},
+ '17-jue':{wu:'4 km fácil',sets:[{n:6,d:null,label:"1' a ritmo de media",rec:"2' trote"}],cd:'3 km suave',
+   focus:'Semana de recuperación. Esto es solo para no oxidarte entre las dos carreras. Nada duro.'},
+ '18-mar':{wu:'2,5 km suave + 4 rectas',sets:[{n:3,d:2000,pace:'rm',rec:"2' trote"}],cd:'1,5 km suave',
+   focus:'Última activación antes de Santa Pola, al ritmo exacto que vas a correr el domingo. Memoriza la sensación.'},
+ '18-dom':{wu:'2 km + 4 rectas',sets:[{n:1,d:21097,pace:'rm',label:'MEDIA DE SANTA POLA'}],cd:'1 km andando',
+   focus:'Los primeros 5 km a 4:00-4:02, sin excepciones, aunque te sientas volando. El año pasado saliste a 3:56 y lo pagaste desde el km 16. Si pasas el 10 en 39:45 con las piernas enteras, ahí empiezas a apretar.'},
+
+ '20-mar':{wu:'2,5 km fácil',sets:[{n:8,d:null,label:"1' fuerte",rec:"1' trote"}],cd:'2 km suave',
+   focus:'Reenganche tras la transición. Por sensaciones, sin exigirte ritmos.'},
+ '21-mar':{wu:'3 km suave + 4 rectas',sets:[{n:4,d:2500,pace:'umbral',rec:"2' trote"}],cd:'2 km suave',
+   focus:'Vuelve el umbral, ahora con el listón de Berlín. Los ritmos de la columna de abril ya deberían ser alcanzables.'},
+ '21-dom':{wu:'14 km a ritmo fácil',sets:[{n:1,d:6000,pace:'rm',label:'últimos 6 km'}],
+   focus:'Ritmo de media ya significa 3:53. Si cuesta más de lo esperado, el objetivo se ajusta a 1:23:15.'},
+ '22-mar':{wu:'3 km suave + 4 rectas',sets:[{n:3,d:4000,pace:'umbral',rec:"3' trote"}],cd:'2 km suave',
+   focus:'12 km de umbral, más de lo que hiciste nunca. Si la tercera serie aguanta, el motor está listo.'},
+ '22-dom':{wu:'6 km fácil',sets:[{n:2,d:6000,pace:'rm',rec:"3' trote"}],cd:'4 km suave',
+   focus:'12 km a 3:53 partidos en dos. La versión continua llega en la semana 27.'},
+ '23-mar':{wu:'3,5 km suave + 4 rectas',sets:[{n:1,d:null,label:"35' continuos a umbral",pace:'umbral'}],cd:'2,5 km suave',
+   focus:'Tempo más largo de la temporada. Elige un recorrido llano y sin semáforos: la continuidad es el objetivo.'},
+ '23-dom':{wu:'14 km a ritmo fácil',sets:[{n:1,d:10000,pace:'rm',label:'últimos 10 km'}],
+   focus:'Diez kilómetros a ritmo de Berlín con 14 ya en las piernas. Empieza a parecerse a la carrera de verdad.'},
+ '24-mar':{wu:'3,5 km suave + 5 rectas',sets:[{n:5,d:1000,pace:'vo2',rec:"2' trote"}],cd:'2,5 km suave',
+   focus:'Semana de descarga: una pincelada de velocidad para mantener economía de carrera, nada más.'},
+ '25-mar':{wu:'3,5 km suave + 4 rectas',sets:[{n:2,d:6000,pace:'umbral',rec:"4' trote"}],cd:'2,5 km suave',
+   focus:'Dos bloques de 6 km a umbral. Es la sesión de umbral más exigente del plan.'},
+ '25-sab':{wu:'4 km suave',sets:[{n:1,d:null,label:"15' continuos a umbral",pace:'umbral'}],cd:'3 km suave',
+   focus:'Tempo corto dentro de la semana de mayor volumen. No lo conviertas en una segunda sesión dura.'},
+ '25-dom':{wu:'6,5 km fácil',sets:[{n:2,d:7000,pace:'rm',rec:"3' trote"}],cd:'4,5 km suave',
+   focus:'14 km a ritmo de Berlín, todavía en dos bloques. La semana que viene van seguidos.'},
+ '26-mar':{wu:'3,5 km suave + 4 rectas',sets:[{n:3,d:5000,pace:'umbral',rec:"3' trote"}],cd:'2,5 km suave',
+   focus:'15 km de umbral. Después de esta sesión, el tempo de carrera te va a parecer cómodo.'},
+ '26-dom':{wu:'12 km a ritmo fácil',sets:[{n:1,d:14000,pace:'rm',label:'últimos 14 km'}],
+   focus:'LA SESIÓN CLAVE DE LA TEMPORADA. 14 km seguidos a ritmo de Berlín con 12 ya recorridos. Si la completas entera sin caerte, el 1:22 está hecho. Come y bebe como el día de la carrera.'},
+
+ '27-mar':{wu:'2,5 km suave + 4 rectas',sets:[{n:4,d:2000,pace:'rm',rec:"2' trote"}],cd:'1,5 km suave',
+   focus:'Empieza el taper: baja el volumen, la intensidad se queda. Debes terminar fresco.'},
+ '27-dom':{wu:'12 km a ritmo fácil',sets:[{n:1,d:6000,pace:'rm',label:'últimos 6 km'}],
+   focus:'Última tirada con ritmo. Mucho más corta de lo que te pide el cuerpo. Confía.'},
+ '28-mar':{wu:'2,5 km suave + 4 rectas',sets:[{n:6,d:1000,pace:'rm',rec:"2' trote"}],cd:'1,5 km suave',
+   focus:'Activación de semana de carrera. Ritmo exacto de Berlín, volumen mínimo. Grabar la sensación, no entrenar.'},
+ '28-dom':{wu:'2 km + 4 rectas',sets:[{n:1,d:21097,pace:'rm',label:'MEDIA DE BERLÍN'}],cd:'caminar y disfrutar',
+   focus:'km 1-5 a 3:55 · km 6-15 a 3:53 · km 16-final a 3:51. Geles en el 7 y el 14. Con 35.000 corredores alrededor, el error de salir rápido es aún más fácil que en Santa Pola. Los dos primeros kilómetros van deliberadamente lentos.'}
+};
+
+function autoDesc(s,w){
+  const p=phase(w);
+  if(s[2]==='e') return {wu:null,sets:[],focus:'Conversación fluida de principio a fin, a '+PACE.facil[p]+'/km. Si no puedes hablar en frases completas, vas rápido. Este es el error nº1 cuando sube el volumen.'};
+  if(s[2]==='m') return {wu:null,sets:[],focus:'A '+PACE.medio[p]+'/km. Cómodo pero con intención: ni rodaje ni sesión de calidad. Sirve para acumular volumen de calidad sin coste de recuperación.'};
+  if(s[2]==='l') return {wu:null,sets:[],focus:'Toda a ritmo fácil, '+PACE.facil[p]+'/km. El objetivo es tiempo de pie, no velocidad. Lleva agua si pasa de 90 minutos.'};
+  return {wu:null,sets:[],focus:''};
+}
+
+
+/* ══════════ FUERZA · MOVILIDAD · ESTIRAMIENTOS ══════════ */
+const FUERZA={
+ adapt:{t:'Adaptación anatómica',s:'2-3x12-15 · peso corporal o ligero',
+  ej:['Sentadilla goblet','Zancada estática','Peso muerto rumano ligero','Elevación de gemelo a una pierna','Puente de glúteo a una pierna','Plancha frontal y lateral 30"'],
+  n:'Preparar el tejido, no ganar fuerza. Debes salir con sensación de que podrías haber hecho más. Tras un parón, el tendón de Aquiles y el sóleo tardan meses en adaptarse: esta fase existe para eso.'},
+ max:{t:'Fuerza máxima',s:'3-4x5-8 · peso real, pesado',
+  ej:['Sentadilla trasera (o goblet pesada)','Sentadilla búlgara','Peso muerto rumano','Elevación de gemelo a una pierna, pesada','Pallof press','Plancha lateral 45"'],
+  n:'La fase que más te interesa. La fuerza máxima mejora la economía de carrera, no el tamaño del músculo. Usa un peso que te deje 1-2 repeticiones en la recámara y sube cuando se te quede corto.'},
+ carrera:{t:'Mantenimiento ligero',s:'2x10-12 · sin carga pesada',
+  ej:['Sentadilla y zancada a peso corporal','Puente de glúteo','Gemelo a una pierna sin peso','Plancha y Pallof suaves'],
+  n:'Semanas de carrera. Nada pesado en los 10 días previos: no ganas nada y llegas con las piernas cargadas.'},
+ reinicio:{t:'Reinicio progresivo',s:'2-3x10-12 · carga moderada',
+  ej:['Sentadilla goblet','Sentadilla búlgara','Peso muerto rumano','Elevación de gemelo a una pierna','Pallof press'],
+  n:'Volver sin prisa tras el doblete de enero. Dos semanas para recuperar carga antes de que empiece el bloque duro.'},
+ max2:{t:'Fuerza máxima · bloque Berlín',s:'3-4x5-8 · peso real, pesado',
+  ej:['Sentadilla trasera','Sentadilla búlgara','Peso muerto rumano','Elevación de gemelo a una pierna, pesada','Pallof press','Plancha lateral 45"'],
+  n:'Mantener la fuerza mientras el volumen sube a 80-85 km. En las dos semanas más altas se reduce a una sola sesión: la fuerza se mantiene con poco, el volumen no perdona.'},
+ taper:{t:'Solo activación',s:'1-2x8 · muy ligero',
+  ej:['Movilidad de cadera y tobillo','Core suave','Gemelo a una pierna sin peso'],
+  n:'Nada pesado. El objetivo de estas semanas es llegar fresco, no fuerte.'}
+};
+const fFase=w=>w<4?'adapt':w<16?'max':w<19?'carrera':w<21?'reinicio':w<27?'max2':'taper';
+function fDias(w){
+  const d=['mar','jue'].filter(k=>PLAN[w][1][k]);
+  return (w===25||w===26)?d.slice(0,1):d;   // semanas de 80-85 km: una sola sesión
+}
+const TOTAL_F=PLAN.reduce((s,_,i)=>s+fDias(i).length,0);
+const MOB='6-8 min antes: balanceos de pierna (frontales y laterales) · apertura de cadera en zancada · rockers de tobillo contra la pared · sentadilla profunda sostenida 30"';
+const STRETCH='Ya en frío y sin prisa: gemelo, sóleo y psoas, 30-45 s cada uno. Nunca estático antes de correr — resta fuerza y no previene lesiones.';
+const NO_PESAS='Nada de piernas pesado en las 48 h previas a esta sesión.';
+
+const RACES=[
+ {n:'10K Valencia',d:new Date(2027,0,10),g:'37:30–37:50'},
+ {n:'Media Santa Pola',d:new Date(2027,0,24),g:'1:23:00–1:23:30'},
+ {n:'Media de Berlín',d:new Date(2027,3,4),g:'1:22:00–1:23:00'}
+];
+const PACES=[['Rodaje fácil','facil'],['Rodaje medio','medio'],['Ritmo de media','rm'],['Umbral','umbral'],['Ritmo de 10K','r10k'],['VO2max','vo2']];
+
+/* ══════════ ESTADO ══════════ */
+const KEY='plan2027-log';
+let log={}, wi=0, open=null, showPaces=false;
+try{ log=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ log={}; }
+
+const today=new Date();
+const addD=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
+const sDate=(w,o)=>addD(BASE,w*7+o);
+const dk=d=>d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate();
+const fmt=d=>d.toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const wkTot=w=>DAYS.reduce((s,d)=>s+(PLAN[w][1][d.k]?PLAN[w][1][d.k][1]:0),0);
+const TOTAL_KM=PLAN.reduce((s,_,i)=>s+wkTot(i),0);
+const TOTAL_S=PLAN.reduce((s,w)=>s+DAYS.filter(d=>w[1][d.k]).length,0);
+const curWeek=Math.min(Math.max(Math.floor(Math.floor((today-BASE)/864e5)/7),0),PLAN.length-1);
+wi=curWeek;
+
+/* tiempo → segundos · acepta 7:44 · 1:23:45 · 744 */
+function parseT(v){
+  if(!v) return null;
+  v=String(v).trim();
+  if(/^\d{1,2}:\d{2}:\d{2}$/.test(v)){const[h,m,s]=v.split(':').map(Number);return h*3600+m*60+s;}
+  if(/^\d{1,3}:\d{2}$/.test(v)){const[m,s]=v.split(':').map(Number);return m*60+s;}
+  if(/^\d{3,4}$/.test(v)){const s=+v.slice(-2),m=+v.slice(0,-2);return m*60+s;}
+  return null;
+}
+const fmtP=sec=>{const m=Math.floor(sec/60),s=Math.round(sec%60);return m+':'+String(s).padStart(2,'0');};
+
+let saveT;
+function save(){
+  clearTimeout(saveT);
+  saveT=setTimeout(()=>{
+    try{ localStorage.setItem(KEY,JSON.stringify(log)); flash('Guardado'); }
+    catch(e){ flash('No se pudo guardar','#F2695C'); }
+  },300);
+}
+function flash(msg,color){
+  const el=document.getElementById('status');
+  el.textContent=msg; el.style.color=color||'var(--faint)';
+  clearTimeout(el._t); el._t=setTimeout(()=>{el.textContent='';},1500);
+}
+
+/* ══════════ RENDER ══════════ */
+function renderRaces(){
+  document.getElementById('races').innerHTML=RACES.map(r=>{
+    const days=Math.ceil((r.d-today)/864e5);
+    return `<div class="race"><div class="nm">${esc(r.n)}</div>
+      <div class="d num">${days>0?days:'—'}<span>días</span></div>
+      <div class="g num">${esc(r.g)}</div></div>`;
+  }).join('');
+}
+
+function nextSession(){
+  for(let w=0;w<PLAN.length;w++) for(const d of DAYS){
+    const s=PLAN[w][1][d.k]; if(!s) continue;
+    const id='w'+w+'-'+d.k, dt=sDate(w,d.o);
+    if(!(log[id]&&log[id].done) && dt>=addD(today,-1)) return {w,d,s,id,dt};
+  }
+  return null;
+}
+
+function renderHero(){
+  const n=nextSession(); const el=document.getElementById('hero');
+  if(!n){ el.innerHTML=`<div class="hero"><div class="when">Temporada completada</div>
+    <div class="txt">Berlín queda atrás. Toca descansar.</div></div>`; return; }
+  el.innerHTML=`<div class="hero">
+    <div class="when">Siguiente · ${n.d.l} ${fmt(n.dt)}</div>
+    <div class="main">
+      <div class="km num">${n.s[1]}<span>km</span></div>
+      <div style="flex:1;padding-top:3px">
+        <div class="txt">${esc(n.s[0])}</div>
+        <div class="typ" style="color:${TC[n.s[2]]}">${TN[n.s[2]]}</div>
+      </div>
+    </div>
+    <button class="btn solid" id="goNext">Ver y anotar esta sesión</button></div>`;
+  document.getElementById('goNext').onclick=()=>{wi=n.w;open=n.id;renderAll();
+    const c=document.querySelector('[data-id="'+n.id+'"]');
+    if(c) c.scrollIntoView({behavior:'smooth',block:'center'});};
+}
+
+function renderStrip(){
+  const el=document.getElementById('strip');
+  el.innerHTML=PLAN.map((_,i)=>`<button class="chip ${i===wi?'sel':''} ${i===curWeek?'now':''}" data-w="${i}">${i+1}</button>`).join('');
+  const sel=el.querySelector('.sel'); if(sel) sel.scrollIntoView({inline:'center',block:'nearest'});
+}
+
+function descBlock(s,dayK){
+  const key=wi+'-'+dayK, p=phase(wi);
+  const d=D[key]||autoDesc(s,wi);
+  let h='<div class="desc">';
+  if(d.wu) h+=`<div class="seg"><div class="tag">Calentar</div><div class="val">${esc(d.wu)}</div></div>`;
+  if(d.sets&&d.sets.length){
+    const body=d.sets.map(st=>{
+      const lab=st.label||`${st.n}x${st.d>=1000?(st.d/1000)+' km':st.d+' m'}`;
+      const cnt=st.n>1&&!st.label?'':(st.n>1?`${st.n}x `:'');
+      const pc=st.pace?` a <b>${PACE[st.pace][p]}/km</b>`:'';
+      const rc=st.rec?` · recuperación ${esc(st.rec)}`:'';
+      return `${cnt}${esc(lab)}${pc}${rc}`;
+    }).join('<br>');
+    h+=`<div class="seg"><div class="tag">Sesión</div><div class="val">${body}</div></div>`;
+  }
+  if(d.cd) h+=`<div class="seg"><div class="tag">Soltar</div><div class="val">${esc(d.cd)}</div></div>`;
+  if(s[2]==='q'||s[2]==='r') h+=`<div class="seg"><div class="tag">Movilidad</div><div class="val">${esc(MOB)}</div></div>`;
+  if(s[2]==='q'||s[2]==='r'||s[2]==='l') h+=`<div class="seg"><div class="tag">Después</div><div class="val">${esc(STRETCH)}</div></div>`;
+  if(d.focus) h+=`<div class="focus">${esc(d.focus)}</div>`;
+  return h+'</div>';
+}
+
+function repsBlock(s,dayK,id,e){
+  const key=wi+'-'+dayK, p=phase(wi);
+  const d=D[key]; if(!d||!d.sets||!d.sets.length) return '';
+  const flat=[];
+  d.sets.forEach(st=>{
+    for(let i=0;i<st.n;i++) flat.push({d:st.d,pace:st.pace,
+      label:st.label&&st.n===1?st.label:(st.label?st.label+' '+(i+1):(st.d>=1000?(st.d/1000)+' km':st.d+' m'))});
+  });
+  if(flat.length===1&&!flat[0].d) return '';
+  const vals=e.reps||[];
+  const rows=flat.map((f,i)=>{
+    const t=parseT(vals[i]);
+    let pace='',cls='';
+    if(t&&f.d){ const sp=t/(f.d/1000); pace=fmtP(sp)+'/km';
+      if(f.pace&&PACE_MID[f.pace]&&sp>PACE_MID[f.pace][p]+8) cls='slow'; }
+    else if(t) pace=fmtP(t);
+    return `<div class="rep"><div class="n">${esc(f.label)}</div>
+      <input class="inp num" inputmode="numeric" placeholder="--:--" data-rep="${i}" data-id="${id}" value="${esc(vals[i]||'')}">
+      <div class="p ${cls}" data-repp="${i}">${pace}</div></div>`;
+  }).join('');
+  const times=flat.map((f,i)=>({t:parseT(vals[i]),d:f.d})).filter(x=>x.t&&x.d);
+  let avg='';
+  if(times.length>1){
+    const sp=times.reduce((a,x)=>a+x.t/(x.d/1000),0)/times.length;
+    const first=times[0].t/(times[0].d/1000), last=times[times.length-1].t/(times[times.length-1].d/1000);
+    const drift=Math.round(last-first);
+    avg=`<div class="repavg"><span>Media <span class="num" style="color:var(--text)">${fmtP(sp)}/km</span></span>
+      <span>Deriva <span class="num" style="color:${drift>6?'var(--today)':'var(--done)'}">${drift>0?'+':''}${drift} s/km</span></span></div>`;
+  }
+  return `<div class="reps"><h4>Parciales</h4>${rows}
+    <label style="display:block;margin-top:10px"><span class="lbl">Recuperación real entre series</span>
+      <input class="inp" placeholder="p. ej. 2' trote · 400 m" data-f="rec" data-id="${id}" value="${esc(e.rec||'')}"></label>
+    ${avg}</div>`;
+}
+
+function renderWeek(){
+  const wkDone=DAYS.reduce((s,d)=>{
+    const e=log['w'+wi+'-'+d.k];
+    return s+(e&&e.done?(parseFloat(e.km)||PLAN[wi][1][d.k][1]):0);
+  },0);
+  document.getElementById('whead').innerHTML=`<div><h2>Semana ${wi+1}</h2>
+    <div class="blk">${esc(PLAN[wi][0])}</div></div>
+    <div class="tot num"><span style="color:${wkDone>0?'var(--done)':'var(--faint)'}">${wkDone.toFixed(0)}</span> / ${wkTot(wi)} km</div>`;
+
+  document.getElementById('list').innerHTML=DAYS.map(d=>{
+    const s=PLAN[wi][1][d.k], id='w'+wi+'-'+d.k;
+    if(!s) return `<div class="rest"><b>${d.l}</b><span>Descanso</span></div>`;
+    const e=log[id]||{}, dt=sDate(wi,d.o), isT=dk(dt)===dk(today), isO=open===id;
+    return `<div class="card ${e.done?'done':''} ${isT?'today':''} ${isO?'open':''}" data-id="${id}">
+      <div class="row" data-toggle="${id}">
+        <button class="tick" data-tick="${id}" aria-label="Marcar hecha">${e.done?'✓':''}</button>
+        <div class="mid">
+          <div class="day">${d.l} ${fmt(dt)}${isT?' · hoy':''}</div>
+          <div class="sess">${esc(s[0])}</div>
+        </div>
+        <div class="right">
+          <div><div class="rkm num" data-km="${id}">${e.done&&e.km?esc(e.km):s[1]}</div></div>
+          <div class="bar" style="background:${TC[s[2]]}"></div>
+          <div class="caret">▼</div>
+        </div>
+      </div>
+      ${isO?`<div class="panel">
+        ${descBlock(s,d.k)}
+        <div class="rec"><h4>Cómo fue</h4>
+        <div class="fields">
+          <label style="flex:1"><span class="lbl">Km reales</span>
+            <input class="inp num" inputmode="decimal" placeholder="${s[1]}" data-f="km" data-id="${id}" value="${esc(e.km||'')}"></label>
+          <label style="flex:1"><span class="lbl">Ritmo medio</span>
+            <input class="inp num" placeholder="4:52" data-f="pace" data-id="${id}" value="${esc(e.pace||'')}"></label>
+          <label style="width:76px"><span class="lbl">Pulso</span>
+            <input class="inp num" inputmode="numeric" placeholder="148" data-f="hr" data-id="${id}" value="${esc(e.hr||'')}"></label>
+        </div>
+        ${repsBlock(s,d.k,id,e)}
+        <label style="display:block;margin-top:12px"><span class="lbl">Sensación</span>
+          <select class="inp" data-f="feel" data-id="${id}">
+            ${['','1','2','3','4','5'].map(v=>`<option value="${v}" ${e.feel===v?'selected':''}>${({'':'—','1':'Muy mal','2':'Justo','3':'Normal','4':'Bien','5':'Volando'})[v]}</option>`).join('')}
+          </select></label>
+        <label style="display:block;margin-top:10px"><span class="lbl">Notas</span>
+          <textarea class="inp" rows="2" placeholder="Viento, molestias, cómo fueron las series…" data-f="notes" data-id="${id}">${esc(e.notes||'')}</textarea></label>
+        </div>
+      </div>`:''}
+    </div>`+fuerzaCard(d.k);
+  }).join('');
+}
+
+function fuerzaCard(dayK){
+  if(!fDias(wi).includes(dayK)) return '';
+  const F=FUERZA[fFase(wi)], id='w'+wi+'-'+dayK+'-f', e=log[id]||{}, isO=open===id;
+  return `<div class="card fz ${e.done?'done':''} ${isO?'open':''}" data-id="${id}">
+    <div class="row" data-toggle="${id}">
+      <button class="tick" data-tick="${id}" aria-label="Marcar fuerza hecha">${e.done?'✓':''}</button>
+      <div class="mid">
+        <div class="day">fuerza · después de correr</div>
+        <div class="sess">${esc(F.t)}</div>
+        <div class="fsub">${esc(F.s)}</div>
+      </div>
+      <div class="right"><div class="bar" style="background:#B07FC4"></div><div class="caret">▼</div></div>
+    </div>
+    ${isO?`<div class="panel">
+      <div class="desc">
+        <div class="seg"><div class="tag">Ejercicios</div><div class="val">${F.ej.map(x=>esc(x)).join('<br>')}</div></div>
+        <div class="seg"><div class="tag">Series</div><div class="val"><b>${esc(F.s)}</b> · 25-30 min en total</div></div>
+        <div class="focus">${esc(F.n)}</div>
+      </div>
+      <div class="rec"><h4>Cargas y notas</h4>
+        <textarea class="inp" rows="3" placeholder="Sentadilla 4x6 @60 kg · búlgara 3x8 @16 kg · gemelo 3x8 @20 kg…" data-f="notes" data-id="${id}">${esc(e.notes||'')}</textarea>
+        <div class="fwarn">${esc(NO_PESAS)}</div>
+      </div>
+    </div>`:''}
+  </div>`;
+}
+
+function renderProgress(){
+  let n=0,km=0,f=0;
+  Object.entries(log).forEach(([k,e])=>{ if(!e||!e.done) return;
+    if(k.endsWith('-f')){ f++; return; }
+    n++; km+=parseFloat(e.km)||0; });
+  document.getElementById('pSess').textContent=n+' / '+TOTAL_S+' sesiones';
+  document.getElementById('pFz').innerHTML='<span style="color:var(--text)">'+f+'</span> / '+TOTAL_F;
+  document.getElementById('pBar').style.width=Math.min(100,n/TOTAL_S*100)+'%';
+  document.getElementById('pKm').innerHTML=`<span style="color:var(--text)">${km.toFixed(0)}</span> / ${TOTAL_KM}`;
+}
+
+function renderPaces(){
+  document.getElementById('btnPaces').textContent=showPaces?'Ocultar ritmos':'Ver tabla de ritmos';
+  document.getElementById('paces').innerHTML=showPaces?`<table class="tbl">
+    <thead><tr><th>Sesión</th><th>Sep–Oct</th><th>Enero</th><th>Abril</th></tr></thead>
+    <tbody>${PACES.map(p=>`<tr><td>${esc(p[0])}</td>${[0,1,2].map(i=>`<td class="num">${esc(PACE[p[1]][i])}</td>`).join('')}</tr>`).join('')}</tbody></table>`:'';
+}
+
+function renderAll(){ renderHero(); renderStrip(); renderWeek(); renderProgress(); }
+
+/* ══════════ EVENTOS ══════════ */
+document.getElementById('strip').addEventListener('click',e=>{
+  const b=e.target.closest('[data-w]'); if(!b) return;
+  wi=+b.dataset.w; open=null; renderAll();
+});
+
+document.getElementById('list').addEventListener('click',e=>{
+  const t=e.target.closest('[data-tick]');
+  if(t){ e.stopPropagation();
+    const id=t.dataset.tick, cur=log[id]||{};
+    if(id.endsWith('-f')){ log[id]={...cur,done:!cur.done}; }
+    else { const def=PLAN[wi][1][id.split('-')[1]][1];
+      log[id]={...cur,done:!cur.done,km:cur.km||String(def)}; }
+    save(); renderAll(); return; }
+  if(e.target.closest('.panel')) return;
+  const r=e.target.closest('[data-toggle]');
+  if(r){ const id=r.dataset.toggle; open=(open===id?null:id); renderWeek();
+    if(open){const c=document.querySelector('[data-id="'+id+'"]');
+      if(c) setTimeout(()=>c.scrollIntoView({behavior:'smooth',block:'nearest'}),40);} }
+});
+
+document.getElementById('list').addEventListener('input',e=>{
+  const id=e.target.dataset.id; if(!id) return;
+  if(e.target.dataset.rep!==undefined){
+    const i=+e.target.dataset.rep;
+    const reps=(log[id]&&log[id].reps)?[...log[id].reps]:[];
+    reps[i]=e.target.value;
+    log[id]={...(log[id]||{}),reps};
+    // recalcular solo el ritmo de esa serie, sin re-render
+    const card=e.target.closest('.card');
+    const day=id.split('-')[1], d=D[wi+'-'+day];
+    if(d){ const flat=[]; d.sets.forEach(st=>{for(let k=0;k<st.n;k++)flat.push(st);});
+      const st=flat[i], t=parseT(e.target.value), out=card.querySelector('[data-repp="'+i+'"]');
+      if(out){ if(t&&st.d){ const sp=t/(st.d/1000); out.textContent=fmtP(sp)+'/km';
+          out.className='p'+(st.pace&&PACE_MID[st.pace]&&sp>PACE_MID[st.pace][phase(wi)]+8?' slow':''); }
+        else if(t){ out.textContent=fmtP(t); out.className='p'; }
+        else { out.textContent=''; } } }
+    save(); return;
+  }
+  const f=e.target.dataset.f; if(!f) return;
+  log[id]={...(log[id]||{}),[f]:e.target.value};
+  if(f==='km'){
+    const cell=document.querySelector(`[data-km="${id}"]`);
+    if(cell&&log[id].done) cell.textContent=e.target.value||'';
+  }
+  save(); renderProgress();
+});
+document.getElementById('list').addEventListener('change',e=>{
+  if(e.target.dataset.f==='feel'){
+    log[e.target.dataset.id]={...(log[e.target.dataset.id]||{}),feel:e.target.value}; save();
+  }
+});
+
+document.getElementById('btnPaces').onclick=()=>{showPaces=!showPaces;renderPaces();};
+
+document.getElementById('btnExport').onclick=()=>{
+  const blob=new Blob([JSON.stringify(log,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='entrenos-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); URL.revokeObjectURL(a.href); flash('Copia descargada');
+};
+document.getElementById('btnImport').onclick=()=>document.getElementById('fileIn').click();
+document.getElementById('fileIn').onchange=ev=>{
+  const f=ev.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{ log={...log,...JSON.parse(r.result)}; save(); renderAll(); flash('Copia importada'); }
+    catch(e){ flash('Archivo no válido','#F2695C'); } };
+  r.readAsText(f); ev.target.value='';
+};
+
+renderRaces(); renderAll(); renderPaces();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
