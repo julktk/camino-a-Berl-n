@@ -188,7 +188,7 @@ const PLAN=[
  ['Reconstrucción',{mar:["Fartlek 8x1'/1' por sensaciones",10,'q'],mie:['9 km fácil',9,'e'],jue:['8 km fácil',8,'e'],sab:['7 km suave',7,'e'],dom:['16 km fácil',16,'l']}],
  ['Reconstrucción · descarga',{mar:['8 km fácil + 6 rectas',8,'e'],mie:['8 km fácil',8,'e'],jue:['7 km fácil',7,'e'],sab:null,dom:['14 km fácil',14,'l']}],
 
- ['Base y umbral · 5K',{mar:["4x2000 umbral · rec 2'",11,'q'],mie:['9 km fácil',9,'e'],jue:['7 km fácil + 4 rectas',7,'e'],sab:['CARRERA 5K',10,'r'],dom:['13 km fácil',13,'l']}],
+ ['Base y umbral · 5K · rodilla',{mar:["4x2000 umbral · rec 2'",11,'q'],mie:null,jue:['5-6 km de prueba · rodilla',6,'e'],sab:['CARRERA 5K · si la rodilla lo permite',10,'r'],dom:['13 km fácil · si la rodilla lo permite',13,'l']}],
  ['Base y umbral',{mar:["3x3000 umbral · rec 3'",14,'q'],mie:['10 km fácil',10,'e'],jue:['10 km medio',10,'m'],sab:['8 km fácil',8,'e'],dom:['18 km · últimos 4 a ritmo de media',18,'l']}],
  ['Base y umbral',{mar:['5x2000 umbral · rec 90"',16,'q'],mie:['11 km fácil',11,'e'],jue:['10 km medio',10,'m'],sab:['9 km fácil',9,'e'],dom:['19 km · últimos 5 a ritmo de media',19,'l']}],
  ['Base y umbral · descarga',{mar:["8 km + 6x1' fuerte",8,'q'],mie:['9 km fácil',9,'e'],jue:['8 km fácil',8,'e'],sab:['7 km suave',7,'e'],dom:['16 km fácil',16,'l']}],
@@ -238,13 +238,13 @@ const D={
  '3-mar':{wu:'8 km a ritmo fácil',sets:[{n:6,d:100,label:'100 m progresivos',rec:'vuelta andando'}],
    focus:'Semana de descarga. Si te sientes fuerte, está funcionando: no la conviertas en otra cosa.'},
 
- '4-jue':{wu:'7 km a ritmo fácil',sets:[{n:4,d:100,label:'100 m progresivos',rec:'vuelta andando'}],
-   focus:'Activación a dos días de la carrera. Las rectas despiertan el gesto rápido sin dejar fatiga.'},
+ '4-jue':{wu:null,sets:[],
+   focus:'Rodaje de prueba, solo si al bajar escaleras la rodilla ya no molesta. Si sigue molestando, hoy tampoco corres. 5-6 km muy suaves y llanos, con las Ride 16 o las More V5 — nada de Neo Zen hasta saber qué pasa. Sin rectas. Regla estricta: si aparece la quemazón por fuera de la rodilla, paras y vuelves andando.'},
  '4-sab':{wu:'3 km suave + movilidad + 4 rectas + 2 aceleraciones de 100 m',
    sets:[{n:1,d:5000,label:'5K · competición'}],cd:'2 km muy suave',
-   focus:'Segunda carrera de control en tres semanas. En El Altet hiciste 3:51 de media con parciales casi planos. Hoy, lo mismo un pelín mejor: primer km a 3:50 (lo que ya sabes que aguantas), del 2 al 4 a 3:48-3:50 y el último a tope. Por debajo de 3:50 de media confirma que los ritmos de octubre están bien puestos. Y esta vez el calentamiento entero: en El Altet hiciste 1,5 km en lugar de 3.'},
+   focus:'SOLO SI el jueves salió limpio del todo y el viernes las escaleras no molestan. Si no, no la corras: es una carrera de control, y Valencia y Berlín valen mucho más. Segunda carrera de control en tres semanas. En El Altet hiciste 3:51 de media con parciales casi planos. Hoy, lo mismo un pelín mejor: primer km a 3:50 (lo que ya sabes que aguantas), del 2 al 4 a 3:48-3:50 y el último a tope. Por debajo de 3:50 de media confirma que los ritmos de octubre están bien puestos. Y esta vez el calentamiento entero: en El Altet hiciste 1,5 km en lugar de 3.'},
  '4-dom':{wu:null,sets:[],
-   focus:'El día después de la carrera: 13 km a 5:05-5:20, suave de verdad. Si la grupeta hace 17 a 4:55, te despides en el 13. La carrera de ayer ya fue la sesión dura de la semana.'},
+   focus:'Solo si la rodilla no ha dado guerra en la carrera ni después. Si molestó, hoy descanso. El día después de la carrera: 13 km a 5:05-5:20, suave de verdad. Si la grupeta hace 17 a 4:55, te despides en el 13. La carrera de ayer ya fue la sesión dura de la semana.'},
  '4-mar':{wu:'2 km suave + 4 rectas',sets:[{n:4,d:2000,pace:'umbral',rec:"2' trote"}],cd:'1 km suave',
    focus:'Primera sesión de umbral del año. El umbral es el motor real de la media. Debe salir controlado: si la cuarta serie te cuesta agonía, ibas demasiado rápido.'},
  '5-mar':{wu:'3 km suave + 4 rectas',sets:[{n:3,d:3000,pace:'umbral',rec:"3' trote"}],cd:'2 km suave',
@@ -374,6 +374,10 @@ const FUERZA={
   core:['Dead bug — 3x10 por lado','Plancha lateral — 2x45" por lado','Pallof press con polea o goma — 3x10 por lado'],
   n:'Mantener la fuerza mientras el volumen sube a 80-85 km. En las dos semanas más altas se reduce a una sola sesión: la fuerza se mantiene con poco, el volumen no perdona.',
   min:'Si no hay ganas: gemelo a una pierna y búlgara, 3 series pesadas cada uno. Diez minutos.'},
+ rodilla:{t:'Fuerza adaptada · rodilla',s:'15-20 min · sin material · en vez de correr',
+  ej:['Elevación de gemelo a una pierna en un escalón — 3x12 por pierna','Puente de glúteo a una pierna — 2x12','Abducción tumbado de lado — 3x12 por pierna. Pierna de arriba estirada, súbela un palmo con la punta del pie hacia delante y ligeramente hacia atrás'],
+  core:['Dead bug — 2x10 por lado','Plancha lateral — 2x30" por lado','Bird dog — 2x8 por lado, pausa de 2" arriba'],
+  n:'Sin búlgara hasta que bajar escaleras no moleste: es el ejercicio que más carga la rodilla doblada. La abducción trabaja el glúteo medio, que evita que la rodilla se vaya hacia dentro al apoyar. Si algún ejercicio provoca la quemazón, lo quitas. Ninguno debería doler.'},
  taper:{t:'Solo activación',s:'1-2x8 · muy ligero · 10 min',
   ej:['Movilidad de cadera y tobillo','Gemelo a una pierna sin peso'],
   core:['Dead bug — 1x8 por lado','Plancha lateral — 1x30" por lado'],
@@ -382,7 +386,12 @@ const FUERZA={
 const fFaseCal=w=>w<6?'adapt':w<16?'max':w<19?'carrera':w<21?'reinicio':w<27?'max2':'taper';
 function doneF(){let n=0;for(const k in log){if(k.endsWith('-f')&&log[k]&&log[k].done)n++;}return n;}
 const fFase=w=>{const f=fFaseCal(w);return (f==='max'&&doneF()<6)?'adapt':f;};
+const FZ_OVR={4:{mie:'rodilla'}};   // sesiones de fuerza puntuales: semana → {día: fase}
 function fDias(w){
+  const extra=Object.keys(FZ_OVR[w]||{});
+  return [...fDiasBase(w),...extra.filter(d=>!fDiasBase(w).includes(d))];
+}
+function fDiasBase(w){
   if(fFase(w)==='adapt'){
     // adaptación: días de descanso; nunca el día antes de una carrera
     const s=PLAN[w][1].sab;
@@ -557,7 +566,7 @@ function renderWeek(){
 
   const parts=DAYS.map(d=>{
     const s=PLAN[wi][1][d.k], id='w'+wi+'-'+d.k;
-    if(!s) return `<div class="rest"><b>${d.l}</b><span>Descanso</span></div>`;
+    if(!s) return fDias(wi).includes(d.k)?fuerzaCard(d.k):`<div class="rest"><b>${d.l}</b><span>Descanso</span></div>`;
     const e=log[id]||{}, dt=sDate(wi,d.o), isT=dk(dt)===dk(today), isO=open===id;
     return `<div class="card ${e.done?'done':''} ${isT?'today':''} ${isO?'open':''}" data-id="${id}">
       <div class="row" data-toggle="${id}">
@@ -599,10 +608,11 @@ function renderWeek(){
 
 function fuerzaCard(dayK){
   if(!fDias(wi).includes(dayK)) return '';
-  const ph=fFase(wi), F=FUERZA[ph], id='w'+wi+'-'+dayK+'-f', e=log[id]||{}, isO=open===id;
-  const solo=dayK==='lun'||dayK==='vie';
-  const dt=solo?sDate(wi,dayK==='lun'?0:4):null, isT=solo&&dk(dt)===dk(today);
-  const dayLine=solo?`${dayK==='lun'?'lunes':'viernes'} ${fmt(dt)}${isT?' · hoy':''} · fuerza`:'fuerza · después de correr';
+  const ph=(FZ_OVR[wi]&&FZ_OVR[wi][dayK])||fFase(wi), F=FUERZA[ph], id='w'+wi+'-'+dayK+'-f', e=log[id]||{}, isO=open===id;
+  const OFF={lun:0,mar:1,mie:2,jue:3,vie:4,sab:5,dom:6}, NOM={lun:'lunes',mar:'martes',mie:'miércoles',jue:'jueves',vie:'viernes',sab:'sábado',dom:'domingo'};
+  const solo=!PLAN[wi][1][dayK];
+  const dt=solo?sDate(wi,OFF[dayK]):null, isT=solo&&dk(dt)===dk(today);
+  const dayLine=solo?`${NOM[dayK]} ${fmt(dt)}${isT?' · hoy':''} · fuerza`:'fuerza · después de correr';
   const sub=ph==='adapt'?`${F.s} · ${Math.min(doneF(),6)}/6 para pasar a carga pesada`:F.s;
   return `<div class="card fz ${solo?'solo':''} ${e.done?'done':''} ${isT?'today':''} ${isO?'open':''}" data-id="${id}">
     <div class="row" data-toggle="${id}">
