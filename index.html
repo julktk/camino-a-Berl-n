@@ -350,27 +350,33 @@ function autoDesc(s,w){
 
 /* ══════════ FUERZA · MOVILIDAD · ESTIRAMIENTOS ══════════ */
 const FUERZA={
- adapt:{t:'Adaptación · en casa',s:'6-12 min · sin material',
-  ej:['Elevación de gemelo a una pierna en un escalón — 3x12 por pierna','Sentadilla búlgara con el pie en el sofá — 2x10 por pierna','Puente de glúteo a una pierna — 2x12','Plancha lateral — 2x30" por lado'],
-  n:'Lunes y viernes, los días sin correr: aquí la fuerza es la sesión del día, no un añadido después del rodaje. Son los cuatro ejercicios que atacan lo tuyo — Aquiles y sóleo, y la cadera que se apaga en el km 16. La carga pesada no empieza en una fecha: empieza cuando lleves 6 sesiones hechas.',
-  min:'Si no hay ganas: solo gemelo y búlgara. Seis minutos. Casi siempre acabas haciendo los cuatro.'},
+ adapt:{t:'Adaptación · en casa',s:'6-15 min · sin material',
+  ej:['Elevación de gemelo a una pierna en un escalón — 3x12 por pierna','Sentadilla búlgara con el pie en el sofá — 2x10 por pierna','Puente de glúteo a una pierna — 2x12'],
+  core:['Dead bug — 2x10 por lado','Plancha lateral — 2x30" por lado','Bird dog — 2x8 por lado, pausa de 2" arriba'],
+  n:'Lunes y viernes, los días sin correr: aquí la fuerza es la sesión del día, no un añadido después del rodaje. Son los ejercicios que atacan lo tuyo — Aquiles y sóleo, y la cadera que se apaga en el km 16. La carga pesada no empieza en una fecha: empieza cuando lleves 6 sesiones hechas.',
+  min:'Si no hay ganas: solo gemelo y búlgara. Seis minutos. Casi siempre acabas haciendo el resto.'},
  max:{t:'Fuerza máxima',s:'3-4x5-8 · peso real, pesado · 25-30 min',
-  ej:['Sentadilla trasera (o goblet pesada)','Sentadilla búlgara','Peso muerto rumano','Elevación de gemelo a una pierna, pesada','Pallof press','Plancha lateral 45"'],
+  ej:['Sentadilla trasera (o goblet pesada)','Sentadilla búlgara','Peso muerto rumano','Elevación de gemelo a una pierna, pesada'],
+  core:['Dead bug — 3x10 por lado','Plancha lateral — 2x45" por lado','Pallof press con polea o goma — 3x10 por lado'],
   n:'La fase que más te interesa. La fuerza máxima mejora la economía de carrera, no el tamaño del músculo. Usa un peso que te deje 1-2 repeticiones en la recámara y sube cuando se te quede corto.',
   min:'Si no hay ganas: gemelo a una pierna y búlgara, 3 series pesadas cada uno. Diez minutos.'},
  carrera:{t:'Mantenimiento ligero',s:'2x10-12 · sin carga pesada · 15 min',
-  ej:['Sentadilla y zancada a peso corporal','Puente de glúteo','Gemelo a una pierna sin peso','Plancha y Pallof suaves'],
+  ej:['Sentadilla y zancada a peso corporal','Puente de glúteo','Gemelo a una pierna sin peso'],
+  core:['Dead bug — 2x8 por lado','Plancha lateral — 2x30" por lado','Bird dog — 2x8 por lado'],
   n:'Semanas de carrera. Nada pesado en los 10 días previos: no ganas nada y llegas con las piernas cargadas.'},
  reinicio:{t:'Reinicio progresivo',s:'2-3x10-12 · carga moderada · 20 min',
-  ej:['Sentadilla goblet','Sentadilla búlgara','Peso muerto rumano','Elevación de gemelo a una pierna','Pallof press'],
+  ej:['Sentadilla goblet','Sentadilla búlgara','Peso muerto rumano','Elevación de gemelo a una pierna'],
+  core:['Dead bug — 2x10 por lado','Plancha lateral — 2x30" por lado','Pallof press con polea o goma — 2x10 por lado'],
   n:'Volver sin prisa tras el doblete de enero. Dos semanas para recuperar carga antes de que empiece el bloque duro.',
   min:'Si no hay ganas: gemelo a una pierna y búlgara. Diez minutos.'},
  max2:{t:'Fuerza máxima · bloque Berlín',s:'3-4x5-8 · peso real, pesado · 25-30 min',
-  ej:['Sentadilla trasera','Sentadilla búlgara','Peso muerto rumano','Elevación de gemelo a una pierna, pesada','Pallof press','Plancha lateral 45"'],
+  ej:['Sentadilla trasera','Sentadilla búlgara','Peso muerto rumano','Elevación de gemelo a una pierna, pesada'],
+  core:['Dead bug — 3x10 por lado','Plancha lateral — 2x45" por lado','Pallof press con polea o goma — 3x10 por lado'],
   n:'Mantener la fuerza mientras el volumen sube a 80-85 km. En las dos semanas más altas se reduce a una sola sesión: la fuerza se mantiene con poco, el volumen no perdona.',
   min:'Si no hay ganas: gemelo a una pierna y búlgara, 3 series pesadas cada uno. Diez minutos.'},
  taper:{t:'Solo activación',s:'1-2x8 · muy ligero · 10 min',
-  ej:['Movilidad de cadera y tobillo','Core suave','Gemelo a una pierna sin peso'],
+  ej:['Movilidad de cadera y tobillo','Gemelo a una pierna sin peso'],
+  core:['Dead bug — 1x8 por lado','Plancha lateral — 1x30" por lado'],
   n:'Nada pesado. El objetivo de estas semanas es llegar fresco, no fuerte.'}
 };
 const fFaseCal=w=>w<6?'adapt':w<16?'max':w<19?'carrera':w<21?'reinicio':w<27?'max2':'taper';
@@ -611,6 +617,7 @@ function fuerzaCard(dayK){
     ${isO?`<div class="panel">
       <div class="desc">
         <div class="seg"><div class="tag">Ejercicios</div><div class="val">${F.ej.map(x=>esc(x)).join('<br>')}</div></div>
+        ${F.core?`<div class="seg"><div class="tag">Core · 5 min</div><div class="val">${F.core.map(x=>esc(x)).join('<br>')}<br><span style="color:var(--faint)">Al final de la sesión completa. Nunca dentro del mínimo.</span></div></div>`:''}
         <div class="seg"><div class="tag">Series</div><div class="val"><b>${esc(F.s)}</b></div></div>
         ${F.min?`<div class="seg"><div class="tag">Mínimo</div><div class="val">${esc(F.min)}</div></div>`:''}
         <div class="focus">${esc(F.n)}</div>
